@@ -3,7 +3,7 @@
 # AUTOR/ES            : Ruiz Norman
 # VERSION             : 1.00 estable.
 # FECHA DE CREACION   : 14/11/2022.
-# ULTIMA ACTUALIZACION: 14/11/2022.
+# ULTIMA ACTUALIZACION: 15/11/2022.
 # LICENCIA            : GPL (General Public License) - Version 3.
 #  **************************************************************************
 #  * El software libre no es una cuestion economica sino una cuestion etica *
@@ -70,7 +70,7 @@ import os
 #                             INCLUSIONES PERSONALES
 #=============================================================================
 import files_bot.logger as log
-#import files_bot.config as configuracion
+import files_bot.config as configuracion
 
 #==============================================================================
 # DECLARACION DEL ESPACIO DE NOMBRES POR DEFECTO
@@ -91,21 +91,21 @@ def main():
         mensaje = " " + "=" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
-        mensaje = "  Iniciando SoftStatus's Bot..."
-        print(mensaje)
+        mensaje = "Iniciando SoftStatus's Bot..."
+        print("  " + mensaje)
         log.Escribir_log(mensaje)
         mensaje = " " + "~" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
 
+        #Cargo la configuracion desde un archivo
+        if status:
+            config = configuracion.Cargar()
+            if not(config):
+                status = False
+            else:
+                status = config["parametros"]["bot"]["estado"]
 
-
-        # Cargo la configuracion desde un archivo
-        #if status:
-        #    parametros = configuracion.Cargar()
-        #    if not(parametros):
-        #        status = False
-        #    status = parametros["status"]
 
         #if not(status):
 
@@ -119,15 +119,14 @@ def main():
         print(mensaje)
         log.Escribir_log(mensaje, False)
         mensaje = "ERROR - Ejecucion principal: " + str(excepcion)
-        print(mensaje)
+        print("  " + mensaje)
         log.Escribir_log(mensaje)
     finally:
-        print()
         mensaje = " " + "~" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
-        mensaje = "  Finalizando SoftStatus's Bot..."
-        print(mensaje)
+        mensaje = "Finalizando SoftStatus's Bot..."
+        print("  " + mensaje)
         log.Escribir_log(mensaje)
         mensaje = " " + "=" * 128
         print(mensaje)
