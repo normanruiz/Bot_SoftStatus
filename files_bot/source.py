@@ -26,12 +26,12 @@
 # Inc, 59 Temple Place - Suite 330, Boston, MA 02111-1307, EE.UU.
 #
 ##############################################################################
-# ARCHIVO             : config.py
+# ARCHIVO             : source.py
 # AUTOR               : Norman Ruiz.
 # COLABORADORES       : No aplica.
 # VERSION             : 1.00 estable.
-# FECHA DE CREACION   : 15/11/2022.
-# ULTIMA ACTUALIZACION: 15/11/2022.
+# FECHA DE CREACION   : 16/11/2022.
+# ULTIMA ACTUALIZACION: 16/11/2022.
 # LICENCIA            : GPL (General Public License) - Version 3.
 #=============================================================================
 # SISTEMA OPERATIVO   : Linux NT-9992031 4.4.0-19041-Microsoft #1237-Microsoft Sat Sep 11 14:32:00 PST 2021 x86_64 GNU/Linux.
@@ -42,10 +42,10 @@
 # DEDICATORIA: A mi hija Micaela Ruiz que me re aguanta.
 #=============================================================================
 # DESCRIPCION:
-#             Este archivo incluye la definicion del modulo config.
+#             Este archivo incluye la definicion del modulo source.
 #
-#             Las funciones config permiten la reconfiguracion del bot
-#             a traves de una interfaz xml.
+#             Las funciones source permiten la manipulacion de datos en desde
+#             las bases de datos de origen.
 #
 #-------------------------------------------------------------------------------
 # ARCHIVO DE CABECERA: No aplica
@@ -69,11 +69,12 @@
 #*****************************************************************************
 #                             INCLUSIONES ESTANDAR
 #=============================================================================
-import xmltodict
+
 #*****************************************************************************
 #                             INCLUSIONES PERSONALES
 #=============================================================================
 import files_bot.logger as log
+import files_bot.conection as conection
 
 #*****************************************************************************
 #                             INCLUSIONES PARA WINDOWS
@@ -96,36 +97,47 @@ import files_bot.logger as log
 #***************************************************************************
 #                        FUNCIONES PARA LINUX
 #===========================================================================
-# FUNCION   : dict Cargar().
-# ACCION    : Carga la configuracion desde un archivo json.
+# FUNCION   : dict/bool Recolectar().
+# ACCION    : .
 # PARAMETROS: void, no recibe nada.
-# DEVUELVE  : dict, la configuracion del bot.
+# DEVUELVE  : dict, la configuracion del bot,
+#             bool, False si no encuentra nada o algo sale mal.
 #---------------------------------------------------------------------------
-def Cargar():
-    configfile = "./config.xml"
-    config = None
 
+def Recolectar(config):
+    dataset_aux = []
+    campos_aux = []
+    dataset = {}
+    conexion = False
+    ubicacion = "ConfigPal"
+    consulta = config["parametros"]["conexiones"][ubicacion]["select"]
 
     try:
-        mensaje = "Cargando configuracion..."
+        mensaje = "Cargando nuevo set de datos..."
         print("  " + mensaje)
         log.Escribir_log(mensaje)
 
-        with open(configfile, 'r', encoding='utf-8') as xmlfile:
-            xmlconfig = xmlfile.read()
-            config = xmltodict.parse(xmlconfig)
+        conexion = conection.Conectar(config, ubicacion)
+        dataset_aux = conection.Ejecutar_consulta(conexion, ubicacion, consulta)
+        conection.Desconectar(conexion, ubicacion)
 
-        mensaje = "Configuracion cargada exitosamente..."
-        print(" ", mensaje)
-        log.Escribir_log(mensaje)
+        for registro in dataset_aux:
+            for campo in registro:
+                campos_aux.append(str(campo))
+            dataset[campos_aux[0]] = campos_aux[1:]
+            campos_aux.clear()
+
         mensaje = "Subproceso finalizado..."
         print(" ", mensaje)
         log.Escribir_log(mensaje)
     except Exception as excepcion:
-        config = False
-        mensaje = "ERROR - Cargando configuracion: " + str(excepcion)
+        dataset = False
+        mensaje = "ERROR - Cargando nuevo set de datos: " + str(excepcion)
         print(" ", mensaje)
         log.Escribir_log(mensaje)
+        mensaje = " " + "-" * 128
+        print(mensaje)
+        log.Escribir_log(mensaje, False)
         mensaje = "WARNING!!! - Subproceso interrumpido..."
         print(" ", mensaje)
         log.Escribir_log(mensaje)
@@ -133,7 +145,8 @@ def Cargar():
         mensaje = " " + "-" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
-        return config
+        return dataset
+
 
 #---------------------------------------------------------------------------
 # FUNCION   :

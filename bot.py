@@ -3,7 +3,7 @@
 # AUTOR/ES            : Ruiz Norman
 # VERSION             : 1.00 estable.
 # FECHA DE CREACION   : 14/11/2022.
-# ULTIMA ACTUALIZACION: 15/11/2022.
+# ULTIMA ACTUALIZACION: 16/11/2022.
 # LICENCIA            : GPL (General Public License) - Version 3.
 #  **************************************************************************
 #  * El software libre no es una cuestion economica sino una cuestion etica *
@@ -71,6 +71,8 @@ import os
 #=============================================================================
 import files_bot.logger as log
 import files_bot.config as configuracion
+import files_bot.source as source
+import files_bot.destiny as destiny
 
 #==============================================================================
 # DECLARACION DEL ESPACIO DE NOMBRES POR DEFECTO
@@ -98,7 +100,7 @@ def main():
         print(mensaje)
         log.Escribir_log(mensaje, False)
 
-        #Cargo la configuracion desde un archivo
+        # Cargo la configuracion desde un archivo
         if status:
             config = configuracion.Cargar()
             if not(config):
@@ -106,12 +108,17 @@ def main():
             else:
                 status = config["parametros"]["bot"]["estado"]
 
+        # Carga de datos
+        if status:
+            datosOrigen = source.Recolectar(config)
+            if not(datosOrigen):
+                status = False
 
-        #if not(status):
+        if status:
+            datosRepositorio = destiny.Recolectar(config)
+            if not(datosRepositorio):
+                status = False
 
-        #    mensaje = "WARNING!!! - Proceso principal interrumpido, no se realizaran mas acciones..."
-        #    print(" ", mensaje)
-        #    log.Escribir_log(mensaje)
 
     except Exception as excepcion:
         status_code = 1
@@ -122,6 +129,14 @@ def main():
         print("  " + mensaje)
         log.Escribir_log(mensaje)
     finally:
+        if not(status):
+            mensaje = " " + "-" * 128
+            print(mensaje)
+            log.Escribir_log(mensaje, False)
+            mensaje = "WARNING!!! - Proceso principal interrumpido, no se realizaran mas acciones..."
+            print("  ", mensaje)
+            log.Escribir_log(mensaje)
+
         mensaje = " " + "~" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
