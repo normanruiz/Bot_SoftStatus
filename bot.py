@@ -74,7 +74,7 @@ import files_bot.config as configuracion
 import files_bot.source as source
 import files_bot.destiny as destiny
 import files_bot.filter as filter
-#import files_bot.action as action
+import files_bot.action as action
 
 #==============================================================================
 # DECLARACION DEL ESPACIO DE NOMBRES POR DEFECTO
@@ -128,8 +128,8 @@ def main():
                 status = False
 
         # Persistencia de datos
-        #if status:
-        #    status = action.persistir_datos(config, loteRegistros)
+        if status:
+            status = action.persistir_datos(config, loteRegistros)
 
     except Exception as excepcion:
         status_code = 1

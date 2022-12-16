@@ -203,66 +203,6 @@ def Ejecutar_consulta(conexion, ubicacion, consulta):
         return data
 
 #---------------------------------------------------------------------------
-# FUNCION   : dict Ejecutar_consulta_destino(objeto_conexion, str, str)
-# ACCION    : Consulta la base de datos para recuperar las terminales ya
-#             dentro del circuitod e automatizacion.
-# PARAMETROS: objeto_conexion, la conexion a utilizar
-#             str, la base de datos a donde apuntar
-#             str, la query que se ejecutara
-# DEVUELVE  : dict, coleccion de terminales y su cantidad de solicitudes
-#---------------------------------------------------------------------------
-def Ejecutar_consulta_destino(conexion, ubicacion, consulta):
-    data = {}
-    aux_terminal = None
-    aux_repro = []
-    estados = ['Solicitado', 'Fallido']
-    cursor = None
-    try:
-        mensaje = "Ejecutando query contra " + ubicacion + "..."
-        log.Escribir_log(mensaje)
-        mensaje = "Query: " + consulta
-        log.Escribir_log(mensaje)
-        mensaje = "Generando cursor..."
-        log.Escribir_log(mensaje)
-        cursor = conexion.cursor()
-        mensaje = "Comenzando lectura de datos..."
-        log.Escribir_log(mensaje)
-        cursor.execute(consulta)
-        registro = cursor.fetchone()
-        if registro:
-            aux_terminal = str(registro[0])
-            if str(registro[2]) in estados:
-                aux_repro.append('U')
-            else:
-                aux_repro.append('I')
-            while registro:
-                if aux_terminal == str(registro[0]):
-                    aux_repro.append(int(registro[1]))
-                else:
-                    data[aux_terminal] = list(aux_repro)
-                    aux_terminal = str(registro[0])
-                    aux_repro.clear()
-                    if str(registro[2]) in estados:
-                        aux_repro.append('U')
-                    else:
-                        aux_repro.append('I')
-                    aux_repro.append(registro[1])
-                registro = cursor.fetchone()
-            data[aux_terminal] = list(aux_repro)
-        mensaje = "Lectura de datos finalizada..."
-        log.Escribir_log(mensaje)
-    except Exception as excepcion:
-        print("  ERROR - Ejecutando consulta a destino:", excepcion)
-        mensaje = "ERROR - Ejecutando query :" + str(excepcion)
-        log.Escribir_log(mensaje)
-    finally:
-        if cursor:
-            cursor.close()
-            mensaje = "Destruyendo cursor..."
-            log.Escribir_log(mensaje)
-        return data
-
-#---------------------------------------------------------------------------
 # FUNCION   : int Insertar_nuevos(objeto_conexion, objeto_cursor, str, str, int)
 # ACCION    : Ejecutra la nonquery contra la base de datos que inserta las
 #             nuevas terminales al circuito de la automatizacion.
@@ -273,17 +213,18 @@ def Ejecutar_consulta_destino(conexion, ubicacion, consulta):
 #             int, la prioridad a setear
 # DEVUELVE  : int, 1 si se inserto el campo, 0 si fallo
 #---------------------------------------------------------------------------
-def Insertar_nuevos(conexion, cursor, nonquery_i, terminal, prioridad):
+def Insertar_nuevos(conexion, cursor, insert, terminal, campos):
     status = 0
     try:
-        count = cursor.execute(nonquery_i, terminal, prioridad).rowcount
+        count = cursor.execute(insert, terminal, campos[1][0], campos[1][1], campos[1][2], campos[1][3], campos[1][4], None if campos[1][5] is None else campos[1][5][:-3] ).rowcount
         conexion.commit()
         if count == 1:
             status = 1
+
     except Exception as excepcion:
         mensaje = "ERROR - Insertando nuevo registro: Terminal " + Terminal + "..."
         log.Escribir_log(mensaje)
-        mensaje = "ERROR - Insertando nuevo registro: " + excepcion
+        mensaje = "ERROR - Insertando nuevo registro: " + str(excepcion)
         log.Escribir_log(mensaje)
         print(" ", mensaje)
     finally:

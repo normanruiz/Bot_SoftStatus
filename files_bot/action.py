@@ -26,12 +26,12 @@
 # Inc, 59 Temple Place - Suite 330, Boston, MA 02111-1307, EE.UU.
 #
 ##############################################################################
-# ARCHIVO             : source.py
+# ARCHIVO             : action.py
 # AUTOR               : Norman Ruiz.
 # COLABORADORES       : No aplica.
 # VERSION             : 1.00 estable.
-# FECHA DE CREACION   : 16/11/2022.
-# ULTIMA ACTUALIZACION: 16/11/2022.
+# FECHA DE CREACION   : 14/12/2022.
+# ULTIMA ACTUALIZACION: 14/12/2022.
 # LICENCIA            : GPL (General Public License) - Version 3.
 #=============================================================================
 # SISTEMA OPERATIVO   : Linux NT-9992031 4.4.0-19041-Microsoft #1237-Microsoft Sat Sep 11 14:32:00 PST 2021 x86_64 GNU/Linux.
@@ -42,10 +42,10 @@
 # DEDICATORIA: A mi hija Micaela Ruiz que me re aguanta.
 #=============================================================================
 # DESCRIPCION:
-#             Este archivo incluye la definicion del modulo source.
+#             Este archivo incluye la definicion del modulo action.
 #
-#             Las funciones source permiten la manipulacion de datos en desde
-#             las bases de datos de origen.
+#             Las funciones action se encargan de organizar la persistencoa
+#             de los datos.
 #
 #-------------------------------------------------------------------------------
 # ARCHIVO DE CABECERA: No aplica
@@ -54,7 +54,11 @@
 #==============================================================================|
 #     NOMBRE     |  TIPO  |                    ACCION                          |
 #================+========+====================================================|
-# Cargar()       | dict | Carga la configuracion desde un archivo json.        |
+# Verificar_archivo() | void | Verifica si el archivo de log del dia existe y  |
+#                             de no ser asi lo genera.                         |
+#----------------+--------+----------------------------------------------------|
+# Escribir_log   |  void  | Escribe una linea con un mensaje en el rachivo     |
+#                           de logs.                                           |
 #================+========+====================================================|
 #
 #-------------------------------------------------------------------------------
@@ -69,12 +73,9 @@
 #*****************************************************************************
 #                             INCLUSIONES ESTANDAR
 #=============================================================================
-
-#*****************************************************************************
-#                             INCLUSIONES PERSONALES
-#=============================================================================
 import files_bot.logger as log
-import files_bot.conection as conection
+import files_bot.conection as data_conection
+from threading import Thread
 
 #*****************************************************************************
 #                             INCLUSIONES PARA WINDOWS
@@ -97,42 +98,66 @@ import files_bot.conection as conection
 #***************************************************************************
 #                        FUNCIONES PARA LINUX
 #===========================================================================
-# FUNCION   : dict/bool Recolectar().
-# ACCION    : .
+# FUNCION   : bool verificar_archivo()
+# ACCION    : Verifica si el archivo de log del dia existe y
+#             de no ser asi lo genera.
 # PARAMETROS: void, no recibe nada.
-# DEVUELVE  : dict, la configuracion del bot,
-#             bool, False si no encuentra nada o algo sale mal.
+# DEVUELVE  : void, no devuelve nada.
 #---------------------------------------------------------------------------
-
-def Recolectar(config):
-    dataset_aux = []
-    campos_aux = []
-    dataset = {}
-    conexion = False
-    ubicacion = "ConfigPal"
-    consulta = config["parametros"]["conexiones"][ubicacion]["select"]
+def persistir_datos(config, loteRegistros):
+    estado = True
+    lote = {}
+    ubicacion = "LaposTecno"
+    insert = config["parametros"]["conexiones"][ubicacion]["insert"]
+    update = config["parametros"]["conexiones"][ubicacion]["update"]
+    delete = config["parametros"]["conexiones"][ubicacion]["delete"]
+    cursor = None
+    threads = []
+    thread = 0
+    count = 0
+    max_threads = int(config["parametros"]["bot"]["hilos"])
+    threadsregistros = {}
 
     try:
-        mensaje = "Cargando nuevo set de datos..."
+        mensaje = "Anexanado lote de datos..."
         print("  " + mensaje)
         log.Escribir_log(mensaje)
 
-        conexion = conection.Conectar(config, ubicacion)
-        dataset_aux = conection.Ejecutar_consulta(conexion, ubicacion, consulta)
-        conection.Desconectar(conexion, ubicacion)
+        registros = len(loteRegistros)
+        if (registros % max_threads != 0):
+            registros += max_threads
 
-        for registro in dataset_aux:
-            for campo in registro:
-                campos_aux.append(None if campo is None else str(campo).replace('\t', '').replace('\n', ''))
-            dataset[campos_aux[0]] = campos_aux[1:]
-            campos_aux.clear()
+        registros_threds = registros // max_threads
+
+        for terminal, campos in loteRegistros.items():
+            threadsregistros[terminal] = list(campos)
+            count += 1
+            if (count == registros_threds):
+                conexion = data_conection.Conectar(config, ubicacion)
+                threads.append(Thread(target=Impactar_cambio, args=(conexion, ubicacion, insert, update, delete, dict(threadsregistros))))
+                count = 0
+                threadsregistros.clear()
+
+        conexion = data_conection.Conectar(config, ubicacion)
+        threads.append(Thread(target=Impactar_cambio, args=(conexion, ubicacion, insert, update, delete, dict(threadsregistros))))
+        count = 0
+        threadsregistros.clear()
+
+        for thread in threads:
+        	thread.start()
+
+        for thread in threads:
+        	thread.join()
+
+
 
         mensaje = "Subproceso finalizado..."
         print(" ", mensaje)
         log.Escribir_log(mensaje)
+
     except Exception as excepcion:
-        dataset = False
-        mensaje = "ERROR - Cargando nuevo set de datos: " + str(excepcion)
+        estado = False
+        mensaje = "ERROR - Anexanado lote de datos: " + str(excepcion)
         print(" ", mensaje)
         log.Escribir_log(mensaje)
         mensaje = " " + "-" * 128
@@ -141,19 +166,55 @@ def Recolectar(config):
         mensaje = "WARNING!!! - Subproceso interrumpido..."
         print(" ", mensaje)
         log.Escribir_log(mensaje)
+
     finally:
         mensaje = " " + "-" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
-        return dataset
-
+        return estado
 
 #---------------------------------------------------------------------------
-# FUNCION   :
-# ACCION    :
-# PARAMETROS:
-# DEVUELVE  :
+# FUNCION   : void Impactar_cambio(objeto_conexion, string, string, string, dict)
+# ACCION    : Inserta y/o actualiza el nuevo lote de terminales en el proceso de migracion.
+# PARAMETROS: objeto_conexion, la conecion contra la base de datos
+#             string, la ubicacion  a la que apunta la conexion
+#             string, la nonquery para los insert
+#             string, la nonquery para los update
+#             dict, el lote de terminales a impactar
+# DEVUELVE  : void, no devuelve nada.
 #---------------------------------------------------------------------------
+def Impactar_cambio(conexion, ubicacion, insert, update, delete, sublote):
+    estado = True
+    try:
+        cursor = conexion.cursor()
+        for terminal, campos in sublote.items():
+            if campos[0] == 'c':
+                data_conection.Insertar_nuevos(conexion, cursor, insert, terminal, campos)
+            elif campos[0] == 'u':
+                #data_conection.Actualizar_existentes(conexion, cursor, nonquery_u, terminal, accion[1])
+                print(" Actualice un registro")
+            elif campos[0] == 'd':
+                print(" Borre un registro")
+                #data_conection.Eliminar_existentes(conexion, cursor, nonquery_d, terminal, accion[1])
+
+
+
+    except Exception as excepcion:
+        estado = False
+        mensaje = "ERROR - Generando lote de registros: " + str(excepcion)
+        print(" ", mensaje)
+        log.Escribir_log(mensaje)
+        mensaje = " " + "-" * 128
+        print(mensaje)
+        log.Escribir_log(mensaje, False)
+        mensaje = "WARNING!!! - Subproceso interrumpido..."
+        print(" ", mensaje)
+        log.Escribir_log(mensaje)
+
+    finally:
+        cursor.close()
+        data_conection.Desconectar(conexion, ubicacion)
+        return estado
 
 #***************************************************************************
 #                        FUNCIONES PARA WINDOWS
