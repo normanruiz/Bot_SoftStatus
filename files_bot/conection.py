@@ -222,7 +222,7 @@ def Insertar_nuevos(conexion, cursor, insert, terminal, campos):
             status = 1
 
     except Exception as excepcion:
-        mensaje = "ERROR - Insertando nuevo registro: Terminal " + Terminal + "..."
+        mensaje = "ERROR - Insertando nuevo registro: Terminal " + terminal + "..."
         log.Escribir_log(mensaje)
         mensaje = "ERROR - Insertando nuevo registro: " + str(excepcion)
         log.Escribir_log(mensaje)
@@ -250,9 +250,37 @@ def Actualizar_existentes(conexion, cursor, nonquery_u, terminal, solicitudes):
         if count == 1:
             status = 1
     except Exception as excepcion:
-        mensaje = "ERROR - Actualizando registro existente: Terminal " + Terminal + "..."
+        mensaje = "ERROR - Actualizando registro existente: Terminal " + terminal + "..."
         log.Escribir_log(mensaje)
-        mensaje = "ERROR - Actualizando registro existente: " + excepcion
+        mensaje = "ERROR - Actualizando registro existente: " + str(excepcion)
+        log.Escribir_log(mensaje)
+        print(" ", mensaje)
+    finally:
+        return status
+
+#---------------------------------------------------------------------------
+# FUNCION   : int Actualizar_existentes(conexion, cursor, nonquery_u, terminal, solicitudes)
+# ACCION    : Ejecutra la nonquery contra la base de datos que actualioza el
+#             contador de solicitudes de las terminales ya presentes en el
+#             circuito de la automatizacion.
+# PARAMETROS: objeto_conexion, la conexion a utilizar
+#             objeto_cursor, el cursor para la ejecucion del nonquery
+#             str, la cadena con el update a realizar
+#             str, la terminla a actualizar
+#             int, el numero de solicitures a setear
+# DEVUELVE  : int, 1 si se actualizo el campo, 0 si fallo
+#---------------------------------------------------------------------------
+def Eliminar_existentes(conexion, cursor, delete, terminal):
+    status = 0
+    try:
+        count = cursor.execute(delete, terminal).rowcount
+        conexion.commit()
+        if count == 1:
+            status = 1
+    except Exception as excepcion:
+        mensaje = "ERROR - Actualizando registro existente: Terminal " + terminal + "..."
+        log.Escribir_log(mensaje)
+        mensaje = "ERROR - Actualizando registro existente: " + str(excepcion)
         log.Escribir_log(mensaje)
         print(" ", mensaje)
     finally:

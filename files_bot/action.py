@@ -8,7 +8,7 @@
 #  * El software libre no es una cuestion economica sino una cuestion etica *
 #  **************************************************************************
 #
-# Avis Software es marca registrada.
+# Avis Software es marca registrada.4
 #
 # Este programa es software libre; puede redistribuirlo o modificarlo bajo los
 # terminos de la Licencia Publica General de GNU tal como se publica por la
@@ -144,12 +144,10 @@ def persistir_datos(config, loteRegistros):
         threadsregistros.clear()
 
         for thread in threads:
-        	thread.start()
+            thread.start()
 
         for thread in threads:
-        	thread.join()
-
-
+            thread.join()
 
         mensaje = "Subproceso finalizado..."
         print(" ", mensaje)
@@ -194,8 +192,7 @@ def Impactar_cambio(conexion, ubicacion, insert, update, delete, sublote):
                 #data_conection.Actualizar_existentes(conexion, cursor, nonquery_u, terminal, accion[1])
                 print(" Actualice un registro")
             elif campos[0] == 'd':
-                print(" Borre un registro")
-                #data_conection.Eliminar_existentes(conexion, cursor, nonquery_d, terminal, accion[1])
+                data_conection.Eliminar_existentes(conexion, cursor, delete, terminal)
 
 
 
