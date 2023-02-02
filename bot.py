@@ -121,15 +121,19 @@ def main():
             if datosRepositorio == False:
                 status = False
 
-        # Generaciond e lote de registros
+        # Generacion de lote de registros
         if status:
-            loteRegistros = filter.generar_lote(config, datosOrigen, datosRepositorio)
-            if not(loteRegistros):
+            loteRegistros = filter.generar_lote(datosOrigen, datosRepositorio)
+            if loteRegistros == False:
                 status = False
 
         # Persistencia de datos
         if status:
             status = action.persistir_datos(config, loteRegistros)
+
+        # Generando historial
+        if status:
+            status = action.generar_historial(config)
 
     except Exception as excepcion:
         status_code = 1

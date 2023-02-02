@@ -102,7 +102,7 @@ import files_bot.logger as log
 # PARAMETROS: void, no recibe nada.
 # DEVUELVE  : void, no devuelve nada.
 #---------------------------------------------------------------------------
-def generar_lote(config, datosOrigen, datosRepositorio):
+def generar_lote(datosOrigen, datosRepositorio):
     estado = True
     lote = {}
     create = 0
@@ -123,7 +123,7 @@ def generar_lote(config, datosOrigen, datosRepositorio):
             if terminal not in datosRepositorio:
                 lote[terminal] = ['c', campos]
                 create += 1
-            elif campos[2] !=  datosRepositorio[terminal][2]:
+            elif campos[2] != datosRepositorio[terminal][0] or campos[3] !=  datosRepositorio[terminal][1] or campos[5] !=  datosRepositorio[terminal][3]:
                 lote[terminal] = ['u', campos]
                 update += 1
 

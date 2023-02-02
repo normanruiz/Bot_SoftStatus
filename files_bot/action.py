@@ -106,12 +106,10 @@ from threading import Thread
 #---------------------------------------------------------------------------
 def persistir_datos(config, loteRegistros):
     estado = True
-    lote = {}
     ubicacion = "LaposTecno"
     insert = config["parametros"]["conexiones"][ubicacion]["insert"]
     update = config["parametros"]["conexiones"][ubicacion]["update"]
     delete = config["parametros"]["conexiones"][ubicacion]["delete"]
-    cursor = None
     threads = []
     thread = 0
     count = 0
@@ -133,13 +131,14 @@ def persistir_datos(config, loteRegistros):
             threadsregistros[terminal] = list(campos)
             count += 1
             if (count == registros_threds):
+                thread += 1
                 conexion = data_conection.Conectar(config, ubicacion)
-                threads.append(Thread(target=Impactar_cambio, args=(conexion, ubicacion, insert, update, delete, dict(threadsregistros))))
+                threads.append(Thread(target=Impactar_cambio, args=(conexion, ubicacion, insert, update, delete, dict(threadsregistros), thread)))
                 count = 0
                 threadsregistros.clear()
 
         conexion = data_conection.Conectar(config, ubicacion)
-        threads.append(Thread(target=Impactar_cambio, args=(conexion, ubicacion, insert, update, delete, dict(threadsregistros))))
+        threads.append(Thread(target=Impactar_cambio, args=(conexion, ubicacion, insert, update, delete, dict(threadsregistros), thread)))
         count = 0
         threadsregistros.clear()
 
@@ -152,6 +151,9 @@ def persistir_datos(config, loteRegistros):
         mensaje = "Subproceso finalizado..."
         print(" ", mensaje)
         log.Escribir_log(mensaje)
+        mensaje = " " + "-" * 128
+        print(mensaje)
+        log.Escribir_log(mensaje, False)
 
     except Exception as excepcion:
         estado = False
@@ -166,9 +168,6 @@ def persistir_datos(config, loteRegistros):
         log.Escribir_log(mensaje)
 
     finally:
-        mensaje = " " + "-" * 128
-        print(mensaje)
-        log.Escribir_log(mensaje, False)
         return estado
 
 #---------------------------------------------------------------------------
@@ -181,24 +180,23 @@ def persistir_datos(config, loteRegistros):
 #             dict, el lote de terminales a impactar
 # DEVUELVE  : void, no devuelve nada.
 #---------------------------------------------------------------------------
-def Impactar_cambio(conexion, ubicacion, insert, update, delete, sublote):
+def Impactar_cambio(conexion, ubicacion, insertAux, updateAux, deleteAux, sublote, thread):
     estado = True
     try:
-        cursor = conexion.cursor()
         for terminal, campos in sublote.items():
             if campos[0] == 'c':
-                data_conection.Insertar_nuevos(conexion, cursor, insert, terminal, campos)
+                insert = insertAux.replace('?1', str("'" + terminal + "'")).replace('?2', 'NULL' if campos[1][0] is None else str("'" + campos[1][0] + "'")).replace('?3', 'NULL' if campos[1][1] is None else str("'" + campos[1][1] + "'")).replace('?4', 'NULL' if campos[1][2] is None else str("'" + campos[1][2] + "'")).replace('?5', 'NULL' if campos[1][3] is None else str("'" + campos[1][3] + "'")).replace('?6', 'NULL' if campos[1][4] is None else str("'" + campos[1][4] + "'")).replace('?7', 'NULL' if campos[1][5] is None else str("'" + campos[1][5] + "'")).replace('?8', 'NULL' if campos[1][6] is None else str("'" + campos[1][6][:-3] + "'"))
+                data_conection.Insertar_nuevos(conexion, insert, thread)
             elif campos[0] == 'u':
-                #data_conection.Actualizar_existentes(conexion, cursor, nonquery_u, terminal, accion[1])
-                print(" Actualice un registro")
+                update = updateAux.replace('?8', str("'" + terminal + "'")).replace('?1', 'NULL' if campos[1][0] is None else str("'" + campos[1][0] + "'")).replace('?2', 'NULL' if campos[1][1] is None else str("'" + campos[1][1] + "'")).replace('?3', 'NULL' if campos[1][2] is None else str("'" + campos[1][2] + "'")).replace('?4', 'NULL' if campos[1][3] is None else str("'" + campos[1][3] + "'")).replace('?5', 'NULL' if campos[1][4] is None else str("'" + campos[1][4] + "'")).replace('?6', 'NULL' if campos[1][5] is None else str("'" + campos[1][5] + "'")).replace('?7', 'NULL' if campos[1][6] is None else str("'" + campos[1][6][:-3] + "'"))
+                data_conection.Actualizar_existentes(conexion, update, thread)
             elif campos[0] == 'd':
-                data_conection.Eliminar_existentes(conexion, cursor, delete, terminal)
-
-
+                delete = deleteAux.replace('?1', str("'" + terminal + "'"))
+                data_conection.Eliminar_existentes(conexion, delete, thread)
 
     except Exception as excepcion:
         estado = False
-        mensaje = "ERROR - Generando lote de registros: " + str(excepcion)
+        mensaje = "ERROR - Impactando cambio: " + str(excepcion)
         print(" ", mensaje)
         log.Escribir_log(mensaje)
         mensaje = " " + "-" * 128
@@ -209,10 +207,52 @@ def Impactar_cambio(conexion, ubicacion, insert, update, delete, sublote):
         log.Escribir_log(mensaje)
 
     finally:
-        cursor.close()
         data_conection.Desconectar(conexion, ubicacion)
         return estado
 
+#---------------------------------------------------------------------------
+# FUNCION   : void Impactar_cambio(objeto_conexion, string, string, string, dict)
+# ACCION    : Inserta y/o actualiza el nuevo lote de terminales en el proceso de migracion.
+# PARAMETROS: objeto_conexion, la conecion contra la base de datos
+#             string, la ubicacion  a la que apunta la conexion
+#             string, la nonquery para los insert
+#             string, la nonquery para los update
+#             dict, el lote de terminales a impactar
+# DEVUELVE  : void, no devuelve nada.
+#---------------------------------------------------------------------------
+def generar_historial(config):
+    estado = True
+    conexion = None
+    ubicacion = "LaposTecno"
+    consulta = config["parametros"]["conexiones"][ubicacion]["sp"]
+    try:
+        mensaje = "Generando historial..."
+        print("  " + mensaje)
+        log.Escribir_log(mensaje)
+
+        conexion = data_conection.Conectar(config, ubicacion)
+        estado = data_conection.Ejecutar_sp(conexion, ubicacion, consulta)
+        data_conection.Desconectar(conexion, ubicacion)
+
+        mensaje = "Subproceso finalizado..."
+        print(" ", mensaje)
+        log.Escribir_log(mensaje)
+
+    except Exception as excepcion:
+        estado = False
+        mensaje = "ERROR - Generando historial: " + str(excepcion)
+        print(" ", mensaje)
+        log.Escribir_log(mensaje)
+        mensaje = " " + "-" * 128
+        print(mensaje)
+        log.Escribir_log(mensaje, False)
+        mensaje = "WARNING!!! - Subproceso interrumpido..."
+        print(" ", mensaje)
+        log.Escribir_log(mensaje)
+
+    finally:
+        data_conection.Desconectar(conexion, ubicacion)
+        return estado
 #***************************************************************************
 #                        FUNCIONES PARA WINDOWS
 #===========================================================================

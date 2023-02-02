@@ -213,21 +213,30 @@ def Ejecutar_consulta(conexion, ubicacion, consulta):
 #             int, la prioridad a setear
 # DEVUELVE  : int, 1 si se inserto el campo, 0 si fallo
 #---------------------------------------------------------------------------
-def Insertar_nuevos(conexion, cursor, insert, terminal, campos):
+def Insertar_nuevos(conexion, insert, thread):
     status = 0
+    cursor = None
     try:
-        count = cursor.execute(insert, terminal, campos[1][0], campos[1][1], campos[1][2], campos[1][3], campos[1][4], None if campos[1][5] is None else campos[1][5][:-3] ).rowcount
+        cursor = conexion.cursor()
+        count = cursor.execute(insert).rowcount
         conexion.commit()
         if count == 1:
             status = 1
+            mensaje = f"Hilo: {thread} - Registro insertado correctamente: {insert}"
+            log.Escribir_log(mensaje)
+        else:
+            mensaje = f"Hilo: {thread} - No se pudo insertar registro: {insert}"
+            log.Escribir_log(mensaje)
 
     except Exception as excepcion:
-        mensaje = "ERROR - Insertando nuevo registro: Terminal " + terminal + "..."
+        mensaje = f"Hilo: {thread} - ERROR - Insertando registro: " + str(excepcion)
         log.Escribir_log(mensaje)
-        mensaje = "ERROR - Insertando nuevo registro: " + str(excepcion)
+        print(" ", mensaje)
+        mensaje = f"Hilo: {thread} - ERROR - Insert utilizado : {insert}"
         log.Escribir_log(mensaje)
         print(" ", mensaje)
     finally:
+        cursor.close()
         return status
 
 #---------------------------------------------------------------------------
@@ -242,20 +251,31 @@ def Insertar_nuevos(conexion, cursor, insert, terminal, campos):
 #             int, el numero de solicitures a setear
 # DEVUELVE  : int, 1 si se actualizo el campo, 0 si fallo
 #---------------------------------------------------------------------------
-def Actualizar_existentes(conexion, cursor, nonquery_u, terminal, solicitudes):
+def Actualizar_existentes(conexion, update, thread):
     status = 0
+    cursor = None
     try:
-        count = cursor.execute(nonquery_u, solicitudes, terminal).rowcount
-        conexion.commit()
+        cursor = conexion.cursor()
+        count = cursor.execute(update).rowcount
         if count == 1:
             status = 1
+            mensaje = f"Hilo: {thread} - Registro actulizado correctamente: {update}"
+            log.Escribir_log(mensaje)
+            conexion.commit()
+        else:
+            mensaje = f"Hilo: {thread} - No se pudo actualizar registro: {update}"
+            log.Escribir_log(mensaje)
+            conexion.rollback()
+
     except Exception as excepcion:
-        mensaje = "ERROR - Actualizando registro existente: Terminal " + terminal + "..."
+        mensaje = f"Hilo: {thread} - ERROR - Actulizando registro: " + str(excepcion)
         log.Escribir_log(mensaje)
-        mensaje = "ERROR - Actualizando registro existente: " + str(excepcion)
+        print(" ", mensaje)
+        mensaje = f"Hilo: {thread} - ERROR - Update utilizado : {update}"
         log.Escribir_log(mensaje)
         print(" ", mensaje)
     finally:
+        cursor.close()
         return status
 
 #---------------------------------------------------------------------------
@@ -270,21 +290,76 @@ def Actualizar_existentes(conexion, cursor, nonquery_u, terminal, solicitudes):
 #             int, el numero de solicitures a setear
 # DEVUELVE  : int, 1 si se actualizo el campo, 0 si fallo
 #---------------------------------------------------------------------------
-def Eliminar_existentes(conexion, cursor, delete, terminal):
+def Eliminar_existentes(conexion, delete, thread):
     status = 0
+    cursor = None
     try:
-        count = cursor.execute(delete, terminal).rowcount
+        cursor = conexion.cursor()
+        count = cursor.execute(delete).rowcount
         conexion.commit()
         if count == 1:
             status = 1
+            mensaje = f"Hilo: {thread} - Registro eliminado correctamente: {delete}"
+            log.Escribir_log(mensaje)
+        else:
+            mensaje = f"Hilo: {thread} - No se pudo eliminar registro: {delete}"
+            log.Escribir_log(mensaje)
+
     except Exception as excepcion:
-        mensaje = "ERROR - Actualizando registro existente: Terminal " + terminal + "..."
+        mensaje = f"Hilo: {thread} - ERROR - Eliminando registro: " + str(excepcion)
         log.Escribir_log(mensaje)
-        mensaje = "ERROR - Actualizando registro existente: " + str(excepcion)
+        print(" ", mensaje)
+        mensaje = f"Hilo: {thread} - ERROR - Delete utilizado : {delete}"
         log.Escribir_log(mensaje)
         print(" ", mensaje)
     finally:
+        cursor.close()
         return status
+
+#---------------------------------------------------------------------------
+# FUNCION   : dict Ejecutar_consulta_origen(objeto_conexion, str, str)
+# ACCION    : Consulta la base de datos para recuperar las terminales con
+#             repros pendientes.
+# PARAMETROS: objeto_conexion, la conexion a utilizar
+#             str, la base de datos a donde apuntar
+#             str, la query que se ejecutara
+# DEVUELVE  : dict, coleccion de terminales y sus respectivas repros
+#---------------------------------------------------------------------------
+def Ejecutar_sp(conexion, ubicacion, consulta):
+    estado = True
+    cursor = None
+    try:
+        mensaje = "Ejecutando sp contra " + ubicacion + "..."
+        log.Escribir_log(mensaje)
+        mensaje = "Query: " + consulta
+        log.Escribir_log(mensaje)
+        mensaje = "Generando cursor..."
+        log.Escribir_log(mensaje)
+        cursor = conexion.cursor()
+
+        mensaje = "Comenzando ejecucuion del sp..."
+        log.Escribir_log(mensaje)
+        cursor.execute(consulta)
+        conexion.commit()
+
+        mensaje = "Ejecucuion del sp finalizada..."
+        log.Escribir_log(mensaje)
+    
+    except pyodbc.ProgrammingError as excepcion:
+        mensaje = "WARNING - Ejecutando sp :" + str(excepcion)
+        print("  " + mensaje)
+        log.Escribir_log(mensaje)
+    except Exception as excepcion:
+        estado = False
+        mensaje = "ERROR - Ejecutando sp :" + str(excepcion)
+        print("  " + mensaje)
+        log.Escribir_log(mensaje)
+    finally:
+        if cursor:
+            cursor.close()
+            mensaje = "Destruyendo cursor..."
+            log.Escribir_log(mensaje)
+        return estado
 
 #***************************************************************************
 #                        FUNCIONES PARA WINDOWS

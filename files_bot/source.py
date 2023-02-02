@@ -111,7 +111,7 @@ def Recolectar(config):
     conexion = False
     ubicacion = "ConfigPal"
     consulta = config["parametros"]["conexiones"][ubicacion]["select"]
-
+    plataformas = ['Paystore Newland', 'Paystore Pax']
     try:
         mensaje = "Cargando nuevo set de datos..."
         print("  " + mensaje)
@@ -124,7 +124,15 @@ def Recolectar(config):
         for registro in dataset_aux:
             for campo in registro:
                 campos_aux.append(None if campo is None else str(campo).replace('\t', '').replace('\n', ''))
-            dataset[campos_aux[0]] = campos_aux[1:]
+            if campos_aux[5] in plataformas:
+                campos_aux[1] = None
+                campos_aux[2] = None
+                campos_aux[3] = None
+                campos_aux[4] = None
+                campos_aux[7] = None
+                dataset[campos_aux[0]] = campos_aux[1:]
+            else:
+                dataset[campos_aux[0]] = campos_aux[1:]
             campos_aux.clear()
 
         mensaje = "Subproceso finalizado..."

@@ -122,7 +122,7 @@ def Recolectar(config):
 
         for registro in dataset_aux:
             for campo in registro:
-                campos_aux.append(str(campo))
+                campos_aux.append(None if campo is None else str(campo))
             dataset[campos_aux[0]] = campos_aux[1:]
             campos_aux.clear()
 
