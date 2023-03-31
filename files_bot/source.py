@@ -130,6 +130,8 @@ def Recolectar(config):
                 campos_aux[3] = None
                 campos_aux[4] = None
                 campos_aux[7] = None
+                campos_aux[8] = None
+                campos_aux[9] = None
                 dataset[campos_aux[0]] = campos_aux[1:]
             else:
                 dataset[campos_aux[0]] = campos_aux[1:]

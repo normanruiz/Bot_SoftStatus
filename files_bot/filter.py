@@ -123,7 +123,7 @@ def generar_lote(datosOrigen, datosRepositorio):
             if terminal not in datosRepositorio:
                 lote[terminal] = ['c', campos]
                 create += 1
-            elif campos[2] != datosRepositorio[terminal][0] or campos[3] !=  datosRepositorio[terminal][1] or campos[5] !=  datosRepositorio[terminal][3]:
+            elif campos[2] != datosRepositorio[terminal][2] or campos[3] !=  datosRepositorio[terminal][3] or campos[4] !=  datosRepositorio[terminal][4] or campos[5] !=  datosRepositorio[terminal][5] or campos[6] !=  datosRepositorio[terminal][6] or campos[7] !=  datosRepositorio[terminal][7]:
                 lote[terminal] = ['u', campos]
                 update += 1
 

@@ -185,10 +185,10 @@ def Impactar_cambio(conexion, ubicacion, insertAux, updateAux, deleteAux, sublot
     try:
         for terminal, campos in sublote.items():
             if campos[0] == 'c':
-                insert = insertAux.replace('?1', str("'" + terminal + "'")).replace('?2', 'NULL' if campos[1][0] is None else str("'" + campos[1][0] + "'")).replace('?3', 'NULL' if campos[1][1] is None else str("'" + campos[1][1] + "'")).replace('?4', 'NULL' if campos[1][2] is None else str("'" + campos[1][2] + "'")).replace('?5', 'NULL' if campos[1][3] is None else str("'" + campos[1][3] + "'")).replace('?6', 'NULL' if campos[1][4] is None else str("'" + campos[1][4] + "'")).replace('?7', 'NULL' if campos[1][5] is None else str("'" + campos[1][5] + "'")).replace('?8', 'NULL' if campos[1][6] is None else str("'" + campos[1][6][:-3] + "'"))
+                insert = insertAux.replace('?1', str("'" + terminal + "'")).replace('?2', 'NULL' if campos[1][0] is None else str("'" + campos[1][0] + "'")).replace('?3', 'NULL' if campos[1][1] is None else str("'" + campos[1][1] + "'")).replace('?4', 'NULL' if campos[1][2] is None else str("'" + campos[1][2] + "'")).replace('?5', 'NULL' if campos[1][3] is None else str("'" + campos[1][3] + "'")).replace('?6', 'NULL' if campos[1][4] is None else str("'" + campos[1][4] + "'")).replace('?7', 'NULL' if campos[1][5] is None else str("'" + campos[1][5] + "'")).replace('?8', 'NULL' if campos[1][6] is None else str("'" + campos[1][6] + "'")).replace('?9', 'NULL' if campos[1][7] is None else str("'" + campos[1][7] + "'")).replace('?0', 'NULL' if campos[1][8] is None else str("'" + campos[1][8][:-3] + "'"))
                 data_conection.Insertar_nuevos(conexion, insert, thread)
             elif campos[0] == 'u':
-                update = updateAux.replace('?8', str("'" + terminal + "'")).replace('?1', 'NULL' if campos[1][0] is None else str("'" + campos[1][0] + "'")).replace('?2', 'NULL' if campos[1][1] is None else str("'" + campos[1][1] + "'")).replace('?3', 'NULL' if campos[1][2] is None else str("'" + campos[1][2] + "'")).replace('?4', 'NULL' if campos[1][3] is None else str("'" + campos[1][3] + "'")).replace('?5', 'NULL' if campos[1][4] is None else str("'" + campos[1][4] + "'")).replace('?6', 'NULL' if campos[1][5] is None else str("'" + campos[1][5] + "'")).replace('?7', 'NULL' if campos[1][6] is None else str("'" + campos[1][6][:-3] + "'"))
+                update = updateAux.replace('?0', str("'" + terminal + "'")).replace('?1', 'NULL' if campos[1][0] is None else str("'" + campos[1][0] + "'")).replace('?2', 'NULL' if campos[1][1] is None else str("'" + campos[1][1] + "'")).replace('?3', 'NULL' if campos[1][2] is None else str("'" + campos[1][2] + "'")).replace('?4', 'NULL' if campos[1][3] is None else str("'" + campos[1][3] + "'")).replace('?5', 'NULL' if campos[1][4] is None else str("'" + campos[1][4] + "'")).replace('?6', 'NULL' if campos[1][5] is None else str("'" + campos[1][5] + "'")).replace('?7', 'NULL' if campos[1][6] is None else str("'" + campos[1][6] + "'")).replace('?8', 'NULL' if campos[1][7] is None else str("'" + campos[1][7] + "'")).replace('?9', 'NULL' if campos[1][8] is None else str("'" + campos[1][8][:-3] + "'"))
                 data_conection.Actualizar_existentes(conexion, update, thread)
             elif campos[0] == 'd':
                 delete = deleteAux.replace('?1', str("'" + terminal + "'"))
@@ -246,12 +246,12 @@ def generar_historial(config):
         mensaje = " " + "-" * 128
         print(mensaje)
         log.Escribir_log(mensaje, False)
+        data_conection.Desconectar(conexion, ubicacion)
         mensaje = "WARNING!!! - Subproceso interrumpido..."
         print(" ", mensaje)
         log.Escribir_log(mensaje)
 
     finally:
-        data_conection.Desconectar(conexion, ubicacion)
         return estado
 #***************************************************************************
 #                        FUNCIONES PARA WINDOWS
