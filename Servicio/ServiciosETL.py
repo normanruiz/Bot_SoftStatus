@@ -1,11 +1,16 @@
 from Servicio.ConexionDBSQLServer import ConexionDBSQLServer
 from Servicio.ConexionDBMySQL import ConexionDBMySQL
+from Servicio.ServiciosAlerta import ServiciosAlerta
 from Modelo.Terminal import Terminal
 from Servicio.ServiciosSalesfoce import ServiciosSalesforce
-import csv
+import json
+from datetime import date
+import time
 
 class ServiciosETL:
-    def __init__(self):
+    def __init__(self, servicios_log, configuracion):
+        self._servicios_log = servicios_log
+        self._configuracion = configuracion
         self._terminalstatus_installed_terminals = {}
         self._coredownloadlog_data_soft = {}
         self._medio_comunicacion = {}
@@ -13,11 +18,29 @@ class ServiciosETL:
         self._terminals_meters_all = {}
         self._datos_pax_paystore = {}
         self._terminales_softstatus = {}
+        self._producto_software_base = {}
+        self._producto_software = {}
         self._terminales = {}
         self._terminales_existentes = {}
         self._terminales_insert = {}
         self._terminales_update = {}
         self._terminales_delete = {}
+
+    @property
+    def servicios_log(self):
+        return self._servicios_log
+
+    @servicios_log.setter
+    def servicios_log(self, servicios_log):
+        self._servicios_log = servicios_log
+
+    @property
+    def configuracion(self):
+        return self._configuracion
+
+    @configuracion.setter
+    def configuracion(self, configuracion):
+        self._configuracion = configuracion
 
     @property
     def terminalstatus_installed_terminals(self):
@@ -74,6 +97,22 @@ class ServiciosETL:
     @terminales_softstatus.setter
     def terminales_softstatus(self, terminales_softstatus):
         self._terminales_softstatus = terminales_softstatus
+
+    @property
+    def producto_software_base(self):
+        return self._producto_software_base
+
+    @producto_software_base.setter
+    def producto_software_base(self, producto_software_base):
+        self._producto_software_base = producto_software_base
+
+    @property
+    def producto_software(self):
+        return self._producto_software
+
+    @producto_software.setter
+    def producto_software(self, producto_software):
+        self._producto_software = producto_software
 
     @property
     def terminales(self):
@@ -215,6 +254,15 @@ class ServiciosETL:
             mensaje = f"Registros recuperados: {len(self.terminales_softstatus)}..."
             servicioslog.escribir(mensaje)
 
+            mensaje = f"Extrayendo datos producto software..."
+            servicioslog.escribir(mensaje)
+
+            with open("producto_software.json", "r", encoding="utf8") as file:
+                self.producto_software_base = json.load(file)
+
+            mensaje = f"Registros recuperados: {len(self.producto_software_base)}..."
+            servicioslog.escribir(mensaje)
+
             mensaje = f"Subproceso finalizado..."
             servicioslog.escribir(mensaje)
         except Exception as excepcion:
@@ -239,18 +287,35 @@ class ServiciosETL:
 
             mensaje = f"Analizando conjunto de productos classic..."
             servicioslog.escribir(mensaje)
-            for llave, valor in self.datos_pax_paystore.items():
-                if valor is not None and valor == 'Classic':
-                    datos_paystore_pax[llave] = valor
+
+            for terminal, producto in self.datos_pax_paystore.items():
+                if producto is not None:
+                    if producto in self.producto_software_base:
+                        self.producto_software[terminal] = self.producto_software_base[producto]
+                    else:
+                        self.producto_software[terminal] = None
+                        with open('producto_software_fail.log', "a", encoding="utf8") as file_log:
+                            file_log.write(f"Terminal:{terminal} - Producto:{producto}\n")
+                    if producto == 'Classic':
+                        datos_paystore_pax[terminal] = producto
+                else:
+                    self.producto_software[terminal] = None
+
             self.datos_pax_paystore = None
+            self.producto_software_base = None
 
             mensaje = f"Analizando conjunto base de terminales ..."
             servicioslog.escribir(mensaje)
             for registro in self.terminalstatus_installed_terminals:
                 terminal = Terminal()
                 terminal.numero = registro[0]
+                if terminal.numero in self.producto_software.keys():
+                    terminal.software_objetivo = self.producto_software[terminal.numero]
+                else:
+                    terminal.software_objetivo = None
                 self.terminales[terminal.numero] = terminal
             self.terminalstatus_installed_terminals = None
+            self.producto_software = None
 
             mensaje = f"Analizando conjunto de datos del parametrizador..."
             servicioslog.escribir(mensaje)
@@ -356,6 +421,32 @@ class ServiciosETL:
                                     terminal.actualizacion = 'Presencial'
                                     terminal.obsolescencia = registro[2]
                             break
+
+            mensaje = f"Analizando software faltante..."
+            servicioslog.escribir(mensaje)
+            reporte = {}
+            alerta = False
+            file = open('software_fail.log', "w", encoding="utf8")
+            file.close()
+            for numero, terminal in self.terminales.items():
+                validado = False
+                for registro in self.lapostecno_tabla_versiones:
+                    if terminal.software == registro[0] and terminal.plantilla == registro[1]:
+                        validado = True
+                        break
+                if validado == False:
+                    if terminal.software not in reporte.keys():
+                        reporte[terminal.software] = []
+                    reporte[terminal.software].append(terminal.numero)
+                    with open('software_fail.log', "a", encoding="utf8") as file_log:
+                        file_log.write(f"[{str(date.today())} {time.strftime('%H:%M:%S', time.localtime())}] Terminal: {terminal.numero}, Plantilla: {terminal.plantilla}, Software: {terminal.software}, Medio de comunicacion: {terminal.medio_comunicacion}\n")
+                    alerta = True
+            if alerta == True:
+                with open('software_fail.json', "w", encoding="utf8") as file:
+                    json.dump(reporte, file, ensure_ascii=False, indent=4)
+                serviciosAlerta = ServiciosAlerta(self.servicios_log, self.configuracion.conexiones[7])
+                serviciosAlerta.enviar("Nuevo software detectado", "software_fail.json")
+
             self.lapostecno_tabla_versiones = None
 
             mensaje = f"Analizando conjunto de datos existentes..."
@@ -366,11 +457,12 @@ class ServiciosETL:
                 terminal.sistema_operativo = registro[1]
                 terminal.vvm = registro[2]
                 terminal.software = registro[3]
-                terminal.plantilla = registro[4]
-                terminal.plataforma = registro[5]
-                terminal.fecha_actualizacion_soft = registro[6]
-                terminal.actualizacion = registro[9]
-                terminal.obsolescencia = registro[10]
+                terminal.software_objetivo = registro[4]
+                terminal.plantilla = registro[5]
+                terminal.plataforma = registro[6]
+                terminal.fecha_actualizacion_soft = registro[7]
+                terminal.actualizacion = registro[10]
+                terminal.obsolescencia = registro[11]
                 self.terminales_existentes[terminal.numero] = terminal
                 del terminal
             self.terminales_softstatus = None

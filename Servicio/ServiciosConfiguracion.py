@@ -1,7 +1,7 @@
 import xmltodict
 
 from Modelo.ApiSalesforce import ApiSalesforce
-from Modelo.Configuracion import Autor, Bot, ConexionSQLServer, Configuracion, ConexionMySQL
+from Modelo.Configuracion import Autor, Bot, ConexionSQLServer, Configuracion, ConexionMySQL, ApiTeams
 from Servicio.decrypt import decifrar
 
 
@@ -101,6 +101,13 @@ class ServiciosConfiguracion:
                              config["parametros"]["conexiones"]["select_terminals_soft_status"]["delete"],
                              config["parametros"]["conexiones"]["select_terminals_soft_status"]["history"],)
                 self.configuracion.conexiones.append(conexion_soft_status)
+
+                api_teams = ApiTeams(config["parametros"]["conexiones"]["api_teams"]["remitente"],
+                                     config["parametros"]["conexiones"]["api_teams"]["destinatario"],
+                                     config["parametros"]["conexiones"]["api_teams"]["ip"],
+                                     config["parametros"]["conexiones"]["api_teams"]["port"],
+                                     config["parametros"]["conexiones"]["api_teams"]["adjunto"])
+                self.configuracion.conexiones.append(api_teams)
 
             mensaje = f"Configuracion cargada correctamente..."
             servicioslog.escribir(mensaje)

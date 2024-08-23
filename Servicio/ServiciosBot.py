@@ -41,7 +41,7 @@ class ServiciosBot:
                 servicios_log.escribir(mensaje)
                 return
 
-            servicios_etl = ServiciosETL()
+            servicios_etl = ServiciosETL(servicios_log, servicios_configuracion.configuracion)
             self.bot.estado = servicios_etl.extract(servicios_log, servicios_configuracion.configuracion)
             if self.bot.estado is False:
                 return

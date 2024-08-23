@@ -2,3 +2,5 @@ config.xml
 files_log/
 support
 chain
+software_fail.json
+software_fail.log

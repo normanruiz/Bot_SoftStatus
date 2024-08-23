@@ -6,6 +6,7 @@ class Terminal:
         self._medio_comunicacion = None
         self._plantilla = None
         self._software = None
+        self._software_objetivo = None
         self._plataforma = None
         self._fecha_actualizacion_soft = None
         self._actualizacion = None
@@ -60,6 +61,14 @@ class Terminal:
         self._software = software
 
     @property
+    def software_objetivo(self):
+        return self._software_objetivo
+
+    @software_objetivo.setter
+    def software_objetivo(self, software_objetivo):
+        self._software_objetivo = software_objetivo
+
+    @property
     def plataforma(self):
         return self._plataforma
 
@@ -91,14 +100,17 @@ class Terminal:
     def obsolescencia(self, obsolescencia):
         self._obsolescencia = obsolescencia
 
+    def __str__(self):
+        return f"Numero: {self.numero} - Plantilla: {self.plantilla} - Software: {self.software} - Medio de Comunicacion: {self.medio_comunicacion}"
+
     def __ne__(self, other):
-        if self.sistema_operativo != other.sistema_operativo or self.vvm != other.vvm or self.plantilla != other.plantilla or self.software != other.software or self.fecha_actualizacion_soft != other.fecha_actualizacion_soft or self.actualizacion != other.actualizacion or self.obsolescencia != other.obsolescencia:
+        if self.sistema_operativo != other.sistema_operativo or self.vvm != other.vvm or self.plantilla != other.plantilla or self.software != other.software or self.software_objetivo != other.software_objetivo or self.fecha_actualizacion_soft != other.fecha_actualizacion_soft or self.actualizacion != other.actualizacion or self.obsolescencia != other.obsolescencia:
             return True
         else:
             return False
 
     def to_insert(self):
-        return (self.numero, self.sistema_operativo, self.vvm, self.software, self.plantilla, self.plataforma, self.actualizacion, self.obsolescencia, self.fecha_actualizacion_soft)
+        return (self.numero, self.sistema_operativo, self.vvm, self.software, self.software_objetivo, self.plantilla, self.plataforma, self.actualizacion, self.obsolescencia, self.fecha_actualizacion_soft)
 
     def to_update(self):
-        return (self.sistema_operativo, self.vvm, self.software, self.plantilla, self.plataforma, self.actualizacion, self.obsolescencia, self.fecha_actualizacion_soft, self.numero)
+        return (self.sistema_operativo, self.vvm, self.software, self.software_objetivo, self.plantilla, self.plataforma, self.actualizacion, self.obsolescencia, self.fecha_actualizacion_soft, self.numero)

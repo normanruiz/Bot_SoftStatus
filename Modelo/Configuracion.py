@@ -194,3 +194,51 @@ class ConexionMySQL:
     @property
     def history(self):
         return self._history
+
+class ApiTeams:
+    def __init__(self, remitente=None, destinatario=None, ip=None, port=None, adjunto=True):
+        self._remitente = remitente
+        self._destinatario = destinatario
+        self._ip = ip
+        self._port = port
+        self._adjunto = True if adjunto == "True" else False
+
+    @property
+    def remitente(self):
+        return self._remitente
+
+    @remitente.setter
+    def remitente(self, remitente):
+        self._remitente = remitente
+
+    @property
+    def destinatario(self):
+        return self._destinatario
+
+    @destinatario.setter
+    def destinatario(self, destinatario):
+        self._destinatario = destinatario
+
+    @property
+    def ip(self):
+        return self._ip
+
+    @ip.setter
+    def ip(self, ip):
+        self._ip = ip
+
+    @property
+    def port(self):
+        return self._port
+
+    @port.setter
+    def port(self, port):
+        self._port = port
+
+    @property
+    def adjunto(self):
+        return self._adjunto
+
+    @adjunto.setter
+    def adjunto(self, adjunto):
+        self._adjunto = True if adjunto == "True" else False
