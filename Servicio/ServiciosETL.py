@@ -163,8 +163,9 @@ class ServiciosETL:
             mensaje = f"Extrayendo listado de terminales instaladas..."
             servicioslog.escribir(mensaje)
             conexion = configuracion.conexiones[0]
-            conexion_terminal_status = ConexionDBSQLServer(servicioslog)
-            estado = conexion_terminal_status.conectar(conexion.driver, conexion.server, conexion.database, conexion.username, conexion.password)
+            conexion_terminal_status = ConexionDBMySQL(servicioslog)
+            estado = conexion_terminal_status.conectar(conexion.host, conexion.port, conexion.database,
+                                                   conexion.username, conexion.password)
             if estado is False:
                 return
             estado, self.terminalstatus_installed_terminals = conexion_terminal_status.ejecutar_select(conexion.select)

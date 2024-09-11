@@ -28,16 +28,20 @@ class ServiciosConfiguracion:
                           True if config["parametros"]["bot"]["estado"] == 'True' else False,
                           int(config["parametros"]["bot"]["hilos"]), autor)
                 self.configuracion.bot = bot
+
                 conexion_termianlstatus = \
-                    ConexionSQLServer(config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["driver"],
-                             config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["server"],
+                    ConexionMySQL(config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["host"],
+                             config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["port"],
                              config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["database"],
                              config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["username"],
                              config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["password"],
                              config["parametros"]["conexiones"]["select_terminalstatus_instaladas"]["select"],
                              None,
-                             None)
+                             None,
+                             None,
+                             None,)
                 self.configuracion.conexiones.append(conexion_termianlstatus)
+
                 conexion_coredownloadlog_data_soft = \
                     ConexionSQLServer(config["parametros"]["conexiones"]["select_coredownloadlog_data_soft"]["driver"],
                              config["parametros"]["conexiones"]["select_coredownloadlog_data_soft"]["server"],
