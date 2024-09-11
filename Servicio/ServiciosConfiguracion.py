@@ -72,16 +72,19 @@ class ServiciosConfiguracion:
                              None,
                              None)
                 self.configuracion.conexiones.append(conexion_lapostecno_tabla_versiones)
+
                 datos_desifrados = decifrar()
                 conexion_terminals_meters_all = \
-                    ConexionMySQL(datos_desifrados["servidor"],
-                             config["parametros"]["conexiones"]["select_terminals_meters_all"]["port"],
-                             config["parametros"]["conexiones"]["select_terminals_meters_all"]["database"],
-                             datos_desifrados["usuario"],
-                             datos_desifrados["password"],
-                             config["parametros"]["conexiones"]["select_terminals_meters_all"]["select"],
-                             None,
-                             None)
+                    ConexionMySQL(config["parametros"]["conexiones"]["select_terminals_meters_all"]["host"],
+                                  config["parametros"]["conexiones"]["select_terminals_meters_all"]["port"],
+                                  config["parametros"]["conexiones"]["select_terminals_meters_all"]["database"],
+                                  config["parametros"]["conexiones"]["select_terminals_meters_all"]["username"],
+                                  config["parametros"]["conexiones"]["select_terminals_meters_all"]["password"],
+                                  config["parametros"]["conexiones"]["select_terminals_meters_all"]["select"],
+                                  None,
+                                  None,
+                                  None,
+                                  None, )
                 self.configuracion.conexiones.append(conexion_terminals_meters_all)
 
                 api_salesforce = ApiSalesforce(config["parametros"]["conexiones"]["api_salesforce"]["org"],
