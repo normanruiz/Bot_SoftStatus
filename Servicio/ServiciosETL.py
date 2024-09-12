@@ -206,9 +206,9 @@ class ServiciosETL:
 
             mensaje = f"Extrayendo datos lapostecno_tabla_versiones..."
             servicioslog.escribir(mensaje)
-            conexion_lapostecno_tabla_versiones = ConexionDBSQLServer(servicioslog)
+            conexion_lapostecno_tabla_versiones = ConexionDBMySQL(servicioslog)
             conexion = configuracion.conexiones[3]
-            estado = conexion_lapostecno_tabla_versiones.conectar(conexion.driver, conexion.server, conexion.database,
+            estado = conexion_lapostecno_tabla_versiones.conectar(conexion.host, conexion.port, conexion.database,
                                                        conexion.username, conexion.password)
             if estado is False:
                 return

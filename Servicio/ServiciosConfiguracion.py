@@ -52,6 +52,7 @@ class ServiciosConfiguracion:
                              None,
                              None)
                 self.configuracion.conexiones.append(conexion_coredownloadlog_data_soft)
+
                 conexion_automatizacion_medio_comunicacion = \
                     ConexionSQLServer(config["parametros"]["conexiones"]["select_automatizacion_medio_comunicacion"]["driver"],
                              config["parametros"]["conexiones"]["select_automatizacion_medio_comunicacion"]["server"],
@@ -62,15 +63,18 @@ class ServiciosConfiguracion:
                              None,
                              None)
                 self.configuracion.conexiones.append(conexion_automatizacion_medio_comunicacion)
+
                 conexion_lapostecno_tabla_versiones = \
-                    ConexionSQLServer(config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["driver"],
-                             config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["server"],
+                    ConexionMySQL(config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["host"],
+                             config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["port"],
                              config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["database"],
                              config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["username"],
                              config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["password"],
                              config["parametros"]["conexiones"]["select_lapostecno_tabla_versiones"]["select"],
                              None,
-                             None)
+                             None,
+                             None,
+                             None,)
                 self.configuracion.conexiones.append(conexion_lapostecno_tabla_versiones)
 
                 datos_desifrados = decifrar()
